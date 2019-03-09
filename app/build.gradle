@@ -19,6 +19,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.google.maps.android:android-maps-utils:0.5+'
     implementation 'com.google.firebase:firebase-abt:17.1.0\n'
     implementation 'com.google.firebase:firebase-config:16.3.0'
     implementation fileTree(dir: 'libs', include: ['*.jar'])

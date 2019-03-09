@@ -3,6 +3,7 @@ package com.example.dragos.electicscooters.main;
 import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -10,6 +11,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
@@ -17,6 +19,7 @@ import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
@@ -45,6 +48,8 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 
@@ -58,6 +63,9 @@ public class MainActivity extends AppCompatActivity
     Marker userMarker;
     ArrayList<Pair<Double, Double>> scooterCoordinates = new ArrayList<>();
     Button scanBtn;
+
+    //DATABASE REFFERENCE
+    private DatabaseReference databaseReference;
 
     /**
      * handles permission response
@@ -169,6 +177,11 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+//        if(getIntent().getStringExtra("qrResult") != null){
+//            showQrDialog(getIntent().getStringExtra("qrResult"));
+//        }
+
         setContentView(R.layout.activity_main);
 
         setUpMap();
@@ -212,6 +225,32 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+    }
+
+    /**
+     * Function to show qr Dialog
+     */
+    private void showQrDialog(String rawResult) {
+        final String result = rawResult;
+        Log.d("QRCodeScanner", rawResult);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Ride Options");
+        builder.setPositiveButton("Start right away!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //TODO: Implement start right away
+            }
+        });
+        builder.setNeutralButton("Choose one of our options!", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                //TODO: Implement choose one of our options
+            }
+        });
+        builder.setMessage("Scooter number: " + rawResult);
+        AlertDialog alert1 = builder.create();
+        alert1.show();
     }
 
     /**
@@ -350,6 +389,16 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onScanPressed() {
+
+//        databaseReference = FirebaseDatabase.getInstance().getReference();
+//        /**
+//         * WRITING TO FIREBASE
+//         */
+//        System.out.println("========================================");
+//        com.example.dragos.electicscooters.main.domain.Location loc = new com.example.dragos.electicscooters.main.domain.Location(1251, 412.61241, 511.12312);
+//        databaseReference.child("locations").child(loc.getId().toString()).setValue(loc);
+
+
         //TODO: scan QR code
         Intent intent=new Intent(getApplicationContext(), QRCodeActivity.class);
         startActivityForResult(intent, 1);
@@ -360,8 +409,9 @@ public class MainActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode==1){
 //            Toast.makeText(getApplicationContext(), data.getStringExtra("result"), Toast.LENGTH_LONG).show();
-            Intent intent=new Intent(getApplicationContext(), RideOptionsActivity.class);
-            startActivity(intent);
+//            Intent intent=new Intent(getApplicationContext(), RideOptionsActivity.class);
+//            startActivity(intent);
+            showQrDialog(data.getStringExtra("qrResult"));
         }
     }
 }

@@ -13,6 +13,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.example.dragos.electicscooters.main.MainActivity;
 import com.google.zxing.Result;
 import me.dm7.barcodescanner.zxing.ZXingScannerView;
 import static android.Manifest.permission.CAMERA;
@@ -139,10 +140,12 @@ public class QRCodeActivity extends AppCompatActivity implements ZXingScannerVie
         AlertDialog alert1 = builder.create();
         alert1.show();
        */
-        System.out.println("==========================" + rawResult.getText());
-        Intent intent=new Intent();
-        intent.putExtra("result", rawResult.getText());
+        Intent intent=new Intent(getApplicationContext(), MainActivity.class);
+        intent.putExtra("qrResult", rawResult.getText());
         setResult(1,intent);
         finish();
+//        startActivity(intent);
+        //System.out.println("==========================" + rawResult.getText());
+
     }
 }

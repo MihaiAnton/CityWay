@@ -12,7 +12,7 @@ import android.widget.Button;
 
 import com.example.dragos.electicscooters.R;
 
-public class ScooterDetails extends BottomSheetDialogFragment {
+public class ScooterDetails extends DialogFragment {
 
     private ScooterDetailsListener mListener;
     private Button ringBtn;
@@ -34,7 +34,6 @@ public class ScooterDetails extends BottomSheetDialogFragment {
         View v = inflater.inflate(R.layout.scooter_details_window,container);
 
         ringBtn=v.findViewById(R.id.ring_button);
-        scanBtn=v.findViewById(R.id.scan_button);
 
         scanBtn.setOnClickListener(new View.OnClickListener() {
             @Override

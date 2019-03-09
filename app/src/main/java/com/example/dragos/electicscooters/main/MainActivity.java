@@ -1,8 +1,12 @@
 package com.example.dragos.electicscooters.main;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -15,6 +19,7 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.util.Pair;
+import android.view.Gravity;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -24,8 +29,12 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.Button;
 import android.widget.Toast;
 
+import com.example.dragos.electicscooters.QRCodeActivity;
 import com.example.dragos.electicscooters.R;
 import com.example.dragos.electicscooters.main.scooterdetails.ScooterDetails;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -48,6 +57,7 @@ public class MainActivity extends AppCompatActivity
     Location currentLocation;
     Marker userMarker;
     ArrayList<Pair<Double, Double>> scooterCoordinates = new ArrayList<>();
+    Button scanBtn;
 
     /**
      * handles permission response
@@ -82,8 +92,8 @@ public class MainActivity extends AppCompatActivity
     /**
      * moves maps camera to current user position
      */
-    void updateMapView(){
-        LatLng updatedPos = new LatLng(currentLocation.getLatitude(),currentLocation.getLongitude());
+    void updateMapView(double lat, double lng){
+        LatLng updatedPos = new LatLng(lat,lng);
         userMarker.setPosition(updatedPos);
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(updatedPos,16.0f));
     }
@@ -134,7 +144,7 @@ public class MainActivity extends AppCompatActivity
             public void onLocationChanged(Location location) {
                 currentLocation.setLatitude(location.getLatitude());
                 currentLocation.setLongitude(location.getLongitude());
-                updateMapView();
+                updateMapView(currentLocation.getLatitude(), currentLocation.getLongitude());
             }
 
             @Override
@@ -155,6 +165,7 @@ public class MainActivity extends AppCompatActivity
         checkLocationPermission();
     }
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -162,23 +173,41 @@ public class MainActivity extends AppCompatActivity
 
         setUpMap();
 
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
+        scanBtn=findViewById(R.id.scanBtn);
+        scanBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                onScanPressed();
             }
         });
 
-        DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
-        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
-                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
-        drawer.addDrawerListener(toggle);
-        toggle.syncState();
+        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
+        toolbar.setNavigationIcon(R.drawable.toggle);
+
+        setSupportActionBar(toolbar);
+
+//        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+//        fab.setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+//                        .setAction("Action", null).show();
+//            }
+//        });
+
+        final DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
+//        ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
+////                this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
+//        toggle.setDrawerIndicatorEnabled(false);
+//
+////        drawer.addDrawerListener(toggle);
+        toolbar.setNavigationOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                drawer.openDrawer(Gravity.START);
+            }
+        });
+//        toggle.syncState();
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
@@ -261,8 +290,15 @@ public class MainActivity extends AppCompatActivity
 
         // Add a userMarker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
-        userMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(currentLocation.getLatitude(), currentLocation.getLongitude())));
+//        if(currentLocation==null){
+//            currentLocation=new Location(LocationManager.GPS_PROVIDER);
+//            currentLocation.setLongitude(46.7712);
+//            currentLocation.setLatitude(23.6236);
+//            updateMapView(23.6236, 46.7712);
+//        }
+        userMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(23.6236, 46.7712)));
         mMap.setOnMarkerClickListener(MainActivity.this);
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(23.6236, 46.7712)));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(17.0f));
         initScooterMarkers();
 
@@ -273,10 +309,20 @@ public class MainActivity extends AppCompatActivity
      * open up scooter details modal
      */
     private void showScooterDetails() {
-        FragmentManager fm = getSupportFragmentManager();
-        ScooterDetails scooterDetails=ScooterDetails.newInstance("sth");
-
-        scooterDetails.show(fm,"tag");
+//        FragmentManager fm = getSupportFragmentManager();
+//        ScooterDetails scooterDetails=ScooterDetails.newInstance("sth");
+//
+//        scooterDetails.show(fm,"tag");
+        Dialog dialog = new Dialog(this, android.R.style.Theme_Dialog);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.scooter_details_window);
+        dialog.setCanceledOnTouchOutside(true);
+        dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
+        params.gravity=Gravity.TOP;
+        params.y=100;
+        dialog.getWindow().setAttributes(params);
+        dialog.show();
     }
 
 
@@ -288,6 +334,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public boolean onMarkerClick(Marker marker) {
         //TODO: center map on marker
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(marker.getPosition()));
         //ignore user marker
         if(marker.getId().equals("m0")){
             return false;
@@ -304,6 +351,17 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onScanPressed() {
         //TODO: scan QR code
-        Toast.makeText(getApplicationContext(), "TO BE IMPLEMENTED", Toast.LENGTH_LONG).show();
+        Intent intent=new Intent(getApplicationContext(), QRCodeActivity.class);
+        startActivityForResult(intent, 1);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(resultCode==1){
+//            Toast.makeText(getApplicationContext(), data.getStringExtra("result"), Toast.LENGTH_LONG).show();
+            Intent intent=new Intent(getApplicationContext(), RideOptionsActivity.class);
+            startActivity(intent);
+        }
     }
 }

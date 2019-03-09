@@ -116,28 +116,30 @@ public class QRCodeActivity extends AppCompatActivity implements ZXingScannerVie
     @Override
     public void handleResult(Result rawResult) {
 
-//        final String result = rawResult.getText();
-//        Log.d("QRCodeScanner", rawResult.getText());
-//        Log.d("QRCodeScanner", rawResult.getBarcodeFormat().toString());
-//
-//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-//        builder.setTitle("Scan Result");
-//        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                mScannerView.resumeCameraPreview(QRCodeActivity.this);
-//            }
-//        });
-//        builder.setNeutralButton("Visit", new DialogInterface.OnClickListener() {
-//            @Override
-//            public void onClick(DialogInterface dialog, int which) {
-//                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(result));
-//                startActivity(browserIntent);
-//            }
-//        });
-//        builder.setMessage(rawResult.getText());
-//        AlertDialog alert1 = builder.create();
-//        alert1.show();
+       /* final String result = rawResult.getText();
+        Log.d("QRCodeScanner", rawResult.getText());
+        Log.d("QRCodeScanner", rawResult.getBarcodeFormat().toString());
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Scan Result");
+        builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                mScannerView.resumeCameraPreview(QRCodeActivity.this);
+            }
+        });
+        builder.setNeutralButton("Visit", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(result));
+                startActivity(browserIntent);
+            }
+        });
+        builder.setMessage(rawResult.getText());
+        AlertDialog alert1 = builder.create();
+        alert1.show();
+       */
+        System.out.println("==========================" + rawResult.getText());
         Intent intent=new Intent();
         intent.putExtra("result", rawResult.getText());
         setResult(1,intent);

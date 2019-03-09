@@ -182,7 +182,11 @@ public class MainActivity extends AppCompatActivity
 
         setContentView(R.layout.activity_main);
 
-        setUpMap();
+        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.map);
+        mapFragment.getMapAsync(this);
+
+//        setUpMap();
 
         scanBtn=findViewById(R.id.scanBtn);
         scanBtn.setOnClickListener(new View.OnClickListener() {
@@ -333,11 +337,11 @@ public class MainActivity extends AppCompatActivity
 //            currentLocation.setLatitude(23.6236);
 //            updateMapView(23.6236, 46.7712);
 //        }
-        userMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(23.6236, 46.7712)));
-        mMap.setOnMarkerClickListener(MainActivity.this);
+//        userMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(23.6236, 46.7712)));
+//        mMap.setOnMarkerClickListener(MainActivity.this);
         mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(23.6236, 46.7712)));
         mMap.animateCamera(CameraUpdateFactory.zoomTo(17.0f));
-        initScooterMarkers();
+//        initScooterMarkers();
 
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }

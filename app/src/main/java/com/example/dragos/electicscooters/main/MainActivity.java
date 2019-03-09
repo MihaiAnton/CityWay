@@ -1,11 +1,17 @@
 package com.example.dragos.electicscooters.main;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorSet;
+import android.animation.IntEvaluator;
+import android.animation.ValueAnimator;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
@@ -34,22 +40,41 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.AccelerateDecelerateInterpolator;
+import android.view.animation.Animation;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.dragos.electicscooters.QRCodeActivity;
 import com.example.dragos.electicscooters.R;
+import com.example.dragos.electicscooters.main.domain.Scooter;
 import com.example.dragos.electicscooters.main.scooterdetails.ScooterDetails;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.Circle;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+<<<<<<< HEAD
+=======
+import com.google.android.gms.maps.model.TileOverlay;
+import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.maps.android.heatmaps.HeatmapTileProvider;
+>>>>>>> 562fa5db74ae51df018138788f62a89a711f153f
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleMap.OnMarkerClickListener, ScooterDetails.ScooterDetailsListener {
@@ -62,8 +87,12 @@ public class MainActivity extends AppCompatActivity
     ArrayList<Pair<Double, Double>> scooterCoordinates = new ArrayList<>();
     Button scanBtn;
 
+<<<<<<< HEAD
     //DATABASE REFFERENCE
 
+=======
+    private DatabaseReference mDataBaseReference;
+>>>>>>> 562fa5db74ae51df018138788f62a89a711f153f
 
     /**
      * handles permission response
@@ -122,16 +151,31 @@ public class MainActivity extends AppCompatActivity
      * initializes scooter markers on map
      */
     void initScooterMarkers(){
+        mDataBaseReference.child("scooters").addValueEventListener(new ValueEventListener() {
+        @Override
+        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-        populateScooterCoords();
-        //TODO: fetch coordinates from server
+            for(DataSnapshot snapshot : dataSnapshot.getChildren()){
+                Scooter sct = snapshot.getValue(Scooter.class);
+                if(sct == null){
+                    continue;
+                }
 
-        for(Pair<Double, Double> scooter:scooterCoordinates){
-            //TODO: clear map
-            double latitude=scooter.first, longitude=scooter.second;
-            mMap.addMarker(new MarkerOptions().position(new LatLng(latitude,longitude)).
-                    icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                Marker scooterMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(sct.getLocation().getLatitude(), sct.getLocation().getLongitude())).title("").icon(
+                        BitmapDescriptorFactory.fromBitmap(resizeMapIcons("scooter_marker", 130, 130))
+                ));
+            }
+
         }
+
+
+        @Override
+        public void onCancelled(@NonNull DatabaseError databaseError) {
+
+        }
+        });
+
+
     }
 
 
@@ -227,7 +271,11 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        mDataBaseReference = FirebaseDatabase.getInstance().getReference();
+
+
     }
+
 
     /**
      * Function to show qr Dialog
@@ -327,7 +375,9 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
+        CameraUpdate point = CameraUpdateFactory.newLatLng(new LatLng(46.772895, 23.589322));
+        mMap.moveCamera(point);
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(17.0f));
 
         // Add a userMarker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
@@ -339,12 +389,29 @@ public class MainActivity extends AppCompatActivity
 //        }
 //        userMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(23.6236, 46.7712)));
 //        mMap.setOnMarkerClickListener(MainActivity.this);
-        mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(23.6236, 46.7712)));
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(17.0f));
-//        initScooterMarkers();
+      //  mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(46.7712 ,23.6236)));
+        //mMap.animateCamera(CameraUpdateFactory.zoomTo(17.0f));
+        initScooterMarkers();
+        addPulsatingSpots();
+
 
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
+
+    /**
+     * Function to add pulsating effects
+     */
+    private void addPulsatingSpots() {
+        List<LatLng> spotList = new ArrayList<>();
+        spotList.add(new LatLng(46.773059, 23.622293));
+        spotList.add(new LatLng(46.770838, 23.589767));
+        for (LatLng latLng : spotList) {
+            addPulsatingEffect(latLng, 60.13212f, 2000);
+            addPulsatingEffect(latLng, 45.13212f, 2000);
+            addPulsatingEffect(latLng, 25.13212f, 2000);
+        }
+    }
+
 
     /**
      * open up scooter details modal
@@ -416,4 +483,54 @@ public class MainActivity extends AppCompatActivity
             showQrDialog(data.getStringExtra("qrResult"));
         }
     }
+
+    private Bitmap resizeMapIcons(String iconName,int width, int height){
+        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(iconName, "drawable", getPackageName()));
+        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
+        return resizedBitmap;
+    }
+
+    //Pulsating methods
+
+    private void addPulsatingEffect(final LatLng userLatlng, float freq, long pulseDuration){
+        final Circle[] lastUserCircle = {null};
+        ValueAnimator lastPulseAnimator = null;
+        if(lastPulseAnimator != null){
+            lastPulseAnimator.cancel();
+            Log.d("onLocationUpdated: ","cancelled" );
+        }
+        if(lastUserCircle[0] != null)
+            lastUserCircle[0].setCenter(userLatlng);;
+        lastPulseAnimator = valueAnimate(freq, pulseDuration, new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                if(lastUserCircle[0] != null)
+                    lastUserCircle[0].setRadius((Float) animation.getAnimatedValue());
+                else {
+                    lastUserCircle[0] = mMap.addCircle(new CircleOptions()
+                            .center(userLatlng)
+                            .radius((Float) animation.getAnimatedValue())
+                            .strokeColor(0x220000FF)
+                            .fillColor(0x220000FF)
+                            .zIndex(120.1f));
+                }
+            }
+        });
+
+    }
+
+    protected ValueAnimator valueAnimate(float accuracy,long duration, ValueAnimator.AnimatorUpdateListener updateListener){
+        Log.d( "valueAnimate: ", "called");
+        ValueAnimator va = ValueAnimator.ofFloat(0,accuracy);
+        va.setDuration(duration);
+        va.addUpdateListener(updateListener);
+        va.setRepeatCount(ValueAnimator.INFINITE);
+        va.setRepeatMode(ValueAnimator.RESTART);
+
+        va.start();
+        return va;
+    }
+    //Stop pulsating methods
+    //Start addHeatMap methods
+
 }

@@ -1,31 +1,24 @@
 package com.example.dragos.electicscooters.main;
 
 import android.Manifest;
-import android.animation.Animator;
-import android.animation.AnimatorSet;
-import android.animation.IntEvaluator;
-import android.animation.ValueAnimator;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.net.Uri;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.util.Pair;
 import android.view.Gravity;
@@ -40,44 +33,49 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.Window;
 import android.view.WindowManager;
-import android.view.animation.AccelerateDecelerateInterpolator;
-import android.view.animation.Animation;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.example.dragos.electicscooters.QRCodeActivity;
 import com.example.dragos.electicscooters.R;
-import com.example.dragos.electicscooters.main.domain.Scooter;
+import com.example.dragos.electicscooters.login.SignInActivity;
 import com.example.dragos.electicscooters.main.scooterdetails.ScooterDetails;
-import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.auth.api.Auth;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.BitmapDescriptor;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-<<<<<<< HEAD
-=======
-import com.google.android.gms.maps.model.TileOverlay;
-import com.google.android.gms.maps.model.TileOverlayOptions;
-import com.google.firebase.database.DataSnapshot;
-import com.google.firebase.database.DatabaseError;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
-import com.google.firebase.database.ValueEventListener;
-import com.google.maps.android.heatmaps.HeatmapTileProvider;
->>>>>>> 562fa5db74ae51df018138788f62a89a711f153f
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleMap.OnMarkerClickListener, ScooterDetails.ScooterDetailsListener {
+        implements NavigationView.OnNavigationItemSelectedListener, OnMapReadyCallback, GoogleMap.OnMarkerClickListener, ScooterDetails.ScooterDetailsListener,
+        GoogleApiClient.OnConnectionFailedListener
+        {
+
+    //signed in user data
+    private static final String TAG = "MainActivity";
+    private DatabaseReference mDatabase;
+    private String userId;
+    private SharedPreferences mSharedPreferences;
+    private String mUsername;
+    private FirebaseAuth mFirebaseAuth;
+    private FirebaseUser mFirebaseUser;
+    private String mPhotoUrl;
+    private GoogleApiClient mGoogleApiClient;
+    private Button mButtonSignOut;
+
 
     private GoogleMap mMap;
     LocationManager locationManager;
@@ -86,13 +84,6 @@ public class MainActivity extends AppCompatActivity
     Marker userMarker;
     ArrayList<Pair<Double, Double>> scooterCoordinates = new ArrayList<>();
     Button scanBtn;
-
-<<<<<<< HEAD
-    //DATABASE REFFERENCE
-
-=======
-    private DatabaseReference mDataBaseReference;
->>>>>>> 562fa5db74ae51df018138788f62a89a711f153f
 
     /**
      * handles permission response
@@ -151,31 +142,16 @@ public class MainActivity extends AppCompatActivity
      * initializes scooter markers on map
      */
     void initScooterMarkers(){
-        mDataBaseReference.child("scooters").addValueEventListener(new ValueEventListener() {
-        @Override
-        public void onDataChange(@NonNull DataSnapshot dataSnapshot) {
 
-            for(DataSnapshot snapshot : dataSnapshot.getChildren()){
-                Scooter sct = snapshot.getValue(Scooter.class);
-                if(sct == null){
-                    continue;
-                }
+        populateScooterCoords();
+        //TODO: fetch coordinates from server
 
-                Marker scooterMarker = mMap.addMarker(new MarkerOptions().position(new LatLng(sct.getLocation().getLatitude(), sct.getLocation().getLongitude())).title("").icon(
-                        BitmapDescriptorFactory.fromBitmap(resizeMapIcons("scooter_marker", 130, 130))
-                ));
-            }
-
+        for(Pair<Double, Double> scooter:scooterCoordinates){
+            //TODO: clear map
+            double latitude=scooter.first, longitude=scooter.second;
+            mMap.addMarker(new MarkerOptions().position(new LatLng(latitude,longitude)).
+                    icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
         }
-
-
-        @Override
-        public void onCancelled(@NonNull DatabaseError databaseError) {
-
-        }
-        });
-
-
     }
 
 
@@ -219,18 +195,49 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-//        if(getIntent().getStringExtra("qrResult") != null){
-//            showQrDialog(getIntent().getStringExtra("qrResult"));
-//        }
-
         setContentView(R.layout.activity_main);
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
-        mapFragment.getMapAsync(this);
+        //user auth
 
-//        setUpMap();
+
+        mSharedPreferences = PreferenceManager.getDefaultSharedPreferences(this);
+        mUsername = "";
+
+        mFirebaseAuth = FirebaseAuth.getInstance();
+        mFirebaseUser = mFirebaseAuth.getCurrentUser();
+
+        if (mFirebaseUser == null) {
+            // Not signed in, launch the Sign In activity
+            startActivity(new Intent(this, SignInActivity.class));
+            finish();
+            return;
+        } else {
+            mUsername = mFirebaseUser.getDisplayName();
+            if (mFirebaseUser.getPhotoUrl() != null) {
+                mPhotoUrl = mFirebaseUser.getPhotoUrl().toString();
+            }
+        }
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .enableAutoManage(this /* FragmentActivity */,this /* OnConnectionFailedListener */)
+                .addApi(Auth.GOOGLE_SIGN_IN_API)
+                .build();
+
+
+        /*mButtonSignOut.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                mFirebaseAuth.signOut();
+                Auth.GoogleSignInApi.signOut(mGoogleApiClient);
+                mFirebaseUser = null;
+                mUsername = "";
+                mPhotoUrl = null;
+                goSignIn();
+                finish();
+            }
+        });*/
+
+
+        setUpMap();
 
         scanBtn=findViewById(R.id.scanBtn);
         scanBtn.setOnClickListener(new View.OnClickListener() {
@@ -271,36 +278,11 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
-        mDataBaseReference = FirebaseDatabase.getInstance().getReference();
-
-
     }
 
 
-    /**
-     * Function to show qr Dialog
-     */
-    private void showQrDialog(String rawResult) {
-        final String result = rawResult;
-        Log.d("QRCodeScanner", rawResult);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Ride Options");
-        builder.setPositiveButton("Start right away!", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                //TODO: Implement start right away
-            }
-        });
-        builder.setNeutralButton("Choose one of our options!", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                //TODO: Implement choose one of our options
-            }
-        });
-        builder.setMessage("Scooter number: " + rawResult);
-        AlertDialog alert1 = builder.create();
-        alert1.show();
+    private void goSignIn(){
+        startActivity(new Intent(this, SignInActivity.class));
     }
 
     /**
@@ -375,9 +357,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        CameraUpdate point = CameraUpdateFactory.newLatLng(new LatLng(46.772895, 23.589322));
-        mMap.moveCamera(point);
-        mMap.animateCamera(CameraUpdateFactory.zoomTo(17.0f));
+
 
         // Add a userMarker in Sydney and move the camera
 //        LatLng sydney = new LatLng(-34, 151);
@@ -387,31 +367,14 @@ public class MainActivity extends AppCompatActivity
 //            currentLocation.setLatitude(23.6236);
 //            updateMapView(23.6236, 46.7712);
 //        }
-//        userMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(23.6236, 46.7712)));
-//        mMap.setOnMarkerClickListener(MainActivity.this);
-      //  mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(46.7712 ,23.6236)));
-        //mMap.animateCamera(CameraUpdateFactory.zoomTo(17.0f));
+        userMarker =mMap.addMarker(new MarkerOptions().position(new LatLng(23.6236, 46.7712)));
+        mMap.setOnMarkerClickListener(MainActivity.this);
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(23.6236, 46.7712)));
+        mMap.animateCamera(CameraUpdateFactory.zoomTo(17.0f));
         initScooterMarkers();
-        addPulsatingSpots();
-
 
 //        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
     }
-
-    /**
-     * Function to add pulsating effects
-     */
-    private void addPulsatingSpots() {
-        List<LatLng> spotList = new ArrayList<>();
-        spotList.add(new LatLng(46.773059, 23.622293));
-        spotList.add(new LatLng(46.770838, 23.589767));
-        for (LatLng latLng : spotList) {
-            addPulsatingEffect(latLng, 60.13212f, 2000);
-            addPulsatingEffect(latLng, 45.13212f, 2000);
-            addPulsatingEffect(latLng, 25.13212f, 2000);
-        }
-    }
-
 
     /**
      * open up scooter details modal
@@ -458,16 +421,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onScanPressed() {
-
-//        databaseReference = FirebaseDatabase.getInstance().getReference();
-//        /**
-//         * WRITING TO FIREBASE
-//         */
-//        System.out.println("========================================");
-//        com.example.dragos.electicscooters.main.domain.Location loc = new com.example.dragos.electicscooters.main.domain.Location(1251, 412.61241, 511.12312);
-//        databaseReference.child("locations").child(loc.getId().toString()).setValue(loc);
-
-
         //TODO: scan QR code
         Intent intent=new Intent(getApplicationContext(), QRCodeActivity.class);
         startActivityForResult(intent, 1);
@@ -478,59 +431,15 @@ public class MainActivity extends AppCompatActivity
         super.onActivityResult(requestCode, resultCode, data);
         if(resultCode==1){
 //            Toast.makeText(getApplicationContext(), data.getStringExtra("result"), Toast.LENGTH_LONG).show();
-//            Intent intent=new Intent(getApplicationContext(), RideOptionsActivity.class);
-//            startActivity(intent);
-            showQrDialog(data.getStringExtra("qrResult"));
+            Intent intent=new Intent(getApplicationContext(), RideOptionsActivity.class);
+            startActivity(intent);
         }
     }
 
-    private Bitmap resizeMapIcons(String iconName,int width, int height){
-        Bitmap imageBitmap = BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(iconName, "drawable", getPackageName()));
-        Bitmap resizedBitmap = Bitmap.createScaledBitmap(imageBitmap, width, height, false);
-        return resizedBitmap;
+
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connectionResult) {
+        Log.d(TAG, "onConnectionFailed:" + connectionResult);
     }
-
-    //Pulsating methods
-
-    private void addPulsatingEffect(final LatLng userLatlng, float freq, long pulseDuration){
-        final Circle[] lastUserCircle = {null};
-        ValueAnimator lastPulseAnimator = null;
-        if(lastPulseAnimator != null){
-            lastPulseAnimator.cancel();
-            Log.d("onLocationUpdated: ","cancelled" );
-        }
-        if(lastUserCircle[0] != null)
-            lastUserCircle[0].setCenter(userLatlng);;
-        lastPulseAnimator = valueAnimate(freq, pulseDuration, new ValueAnimator.AnimatorUpdateListener() {
-            @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                if(lastUserCircle[0] != null)
-                    lastUserCircle[0].setRadius((Float) animation.getAnimatedValue());
-                else {
-                    lastUserCircle[0] = mMap.addCircle(new CircleOptions()
-                            .center(userLatlng)
-                            .radius((Float) animation.getAnimatedValue())
-                            .strokeColor(0x220000FF)
-                            .fillColor(0x220000FF)
-                            .zIndex(120.1f));
-                }
-            }
-        });
-
-    }
-
-    protected ValueAnimator valueAnimate(float accuracy,long duration, ValueAnimator.AnimatorUpdateListener updateListener){
-        Log.d( "valueAnimate: ", "called");
-        ValueAnimator va = ValueAnimator.ofFloat(0,accuracy);
-        va.setDuration(duration);
-        va.addUpdateListener(updateListener);
-        va.setRepeatCount(ValueAnimator.INFINITE);
-        va.setRepeatMode(ValueAnimator.RESTART);
-
-        va.start();
-        return va;
-    }
-    //Stop pulsating methods
-    //Start addHeatMap methods
-
 }

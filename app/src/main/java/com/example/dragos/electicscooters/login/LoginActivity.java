@@ -32,9 +32,6 @@ import android.widget.TextView;
 
 import com.example.dragos.electicscooters.main.MainActivity;
 import com.example.dragos.electicscooters.R;
-import com.example.dragos.electicscooters.main.domain.Location;
-import com.google.firebase.database.DatabaseReference;
-import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -63,8 +60,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      */
     private UserLoginTask mAuthTask = null;
 
-
-
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
@@ -74,8 +69,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-
         Intent intent=new Intent(getApplicationContext(), MainActivity.class);
         startActivity(intent);
         setContentView(R.layout.activity_login);

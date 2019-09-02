@@ -1,7 +1,7 @@
 <h3> Innovation Labs Hackathon 2019 </h3>
 
-- Built an Android application for electric scooter sharing (City-
-  Way). My team was among the best ones which granted us a
+- Built an Android application for electric scooter sharing.
+   My team was among the best ones which granted us a
   mentorship program to further develop our product.
 - Used Google Firebase for cloud storage and Android Studio for
   the application.
